@@ -16,6 +16,7 @@
 //---------------------------//
 //---------------------------//
 const countries = []; // Initialisation d'un tableau vide
+//Sélection des éléments dans le html
 const countriesDiv = document.querySelector(".countries-container");
 const inputSearch = document.getElementById("inputSearch");
 const inputRange = document.getElementById("inputRange");
@@ -30,9 +31,6 @@ const alphaBtn = document.getElementById("alpha");
 const fetchCountries = () => {
   return fetch("https://restcountries.com/v3.1/all")
     .then((response) => {
-      if (!response.ok) {
-        throw new Error("Erreur réseau!");
-      }
       return response.json(); // Transforme la réponse en JSON
     })
     .then((data) => {
@@ -42,47 +40,46 @@ const fetchCountries = () => {
 
 // Fonction pour afficher les pays en fonction du filtre sélectionné
 const displayCountries = () => {
-  // Récupère la valeur de recherche depuis l'input
+  // Récupère la valeur de recherche depuis l'input et le deuxième récupère la valeur dans l'input range puis la converti en un number
   const searchText = inputSearch.value.toLowerCase();
-
-  // Filtrer les pays en fonction du texte de recherche
-  let filteredCountries = countries.filter((country) => {
-    return country.name.common.toLowerCase().includes(searchText);
-  });
+  const rangeNumber = parseInt(inputRange.value);
 
   // Trier les pays en fonction du bouton cliqué
   if (minToMaxBtn.classList.contains("active")) {
-    filteredCountries.sort((a, b) => a.population - b.population);
+    countries.sort((a, b) => a.population - b.population);
   } else if (maxToMinBtn.classList.contains("active")) {
-    filteredCountries.sort((a, b) => b.population - a.population);
+    countries.sort((a, b) => b.population - a.population);
   } else if (alphaBtn.classList.contains("active")) {
-    filteredCountries.sort((a, b) =>
-      a.name.common.localeCompare(b.name.common)
-    );
+    countries.sort((a, b) => a.name.common.localeCompare(b.name.common));
   }
 
-  // Récupère la valeur du range
-  const rangeNumber = parseInt(inputRange.value);
-
-  // Limite le nombre de pays à afficher en fonction de la valeur du range
-  const countriesToShow = filteredCountries.slice(0, rangeNumber);
-
   // Met à jour le nombre de pays affiché dans le span
-  rangeValue.textContent = countriesToShow.length;
+  rangeValue.textContent = inputRange.value;
 
   // Créer une liste HTML des pays filtrés, triés et limités par la valeur du range
-  const countriesHTML = countriesToShow.map(
-    (country) => `<li class="card">
-                    <img src="${country.flags.png}" alt="${country.name.common}">
+  const countriesHTML = countries
+    .filter((country) => {
+      return country.name.common.toLowerCase().includes(searchText);
+    })
+    .slice(0, rangeNumber)
+    .map(
+      (country) => `<li class="card">
+                    <img src="${country.flags.png}" alt="${
+        country.name.common
+      }">
                     <h2>${country.name.common}</h2>
                     <h3>${country.capital}</h3>
                     <p>Population : ${country.population.toLocaleString()}</p>
                 </li>`
-  );
+    );
 
   // Afficher les pays dans la div
   countriesDiv.innerHTML = countriesHTML.join("");
 };
+
+//------------------------------
+// Les écouteurs d'événements
+//------------------------------
 
 // Écouter les changements dans l'input de recherche pour filtrer les pays en temps réel
 inputSearch.addEventListener("input", () => {
@@ -94,7 +91,10 @@ inputRange.addEventListener("input", () => {
   displayCountries();
 });
 
+//-------------------------------------------
 // Écouter les clics sur les boutons de tri
+//-------------------------------------------
+
 minToMaxBtn.addEventListener("click", () => {
   minToMaxBtn.classList.toggle("active");
   maxToMinBtn.classList.remove("active");
@@ -115,6 +115,10 @@ alphaBtn.addEventListener("click", () => {
   maxToMinBtn.classList.remove("active");
   displayCountries();
 });
+
+//-------------------------------
+// Lancement de l'application
+//-------------------------------
 
 // Fonction initiale pour charger et afficher les pays
 fetchCountries().then(() => {
